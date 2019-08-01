@@ -19,7 +19,7 @@ fi
 DOCKER_CMD=${DOCKER_CMD:-docker}
 
 # must be set by build job
-# CONTAINER_REPO_ORGANIZATION=${CONTAINER_REPO_ORGANIZATION:-"dmick"}
+# CONTAINER_REPO_ORGANIZATION=${CONTAINER_REPO_ORGANIZATION:-"quay.io/dmick"}
 # CONTAINER_REPO_USERNAME=${CONTAINER_REPO_USERNAME:-"unset"}
 # CONTAINER_REPO_PASSWORD=${CONTAINER_REPO_PASSWORD:-"unset"}
 
@@ -67,7 +67,7 @@ function install_container_manager {
 
 function login_container_repo {
   echo "Log into the container repo"
-  ${DOCKER_CMD} login -u "$CONTAINER_REPO_USERNAME" -p "$CONTAINER_REPO_PASSWORD"
+  ${DOCKER_CMD} login -u "$CONTAINER_REPO_USERNAME" -p "$CONTAINER_REPO_PASSWORD" ${CONTAINER_REPO_ORGANIZATION}
 }
 
 function enable_experimental_docker_cli {
