@@ -272,6 +272,7 @@ install_container_manager
 cleanup_previous_run
 login_container_repo
 create_head_or_point_release
+RELEASE=${CONTAINER_BRANCH}
 build_ceph_imgs
 # With devel builds we only push latest builds.
 # arm64 aren't present on shaman/chacra so we don't
