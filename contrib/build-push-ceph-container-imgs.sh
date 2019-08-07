@@ -6,6 +6,8 @@ set -ex
 # VARIABLES #
 #############
 
+# save the ceph branch, from the parent job
+CEPH_BRANCH=${BRANCH}
 # GIT_BRANCH is typically 'origin/master', we strip the variable to only get 'master'
 BRANCH="${GIT_BRANCH#*/}"
 LATEST_COMMIT_SHA=$(git rev-parse --short HEAD)
@@ -168,7 +170,7 @@ function build_ceph_imgs {
   echo "Build Ceph container image(s)"
   FLAVORS=""
   if ${DEVEL}; then
-    FLAVORS="${BRANCH},centos,7"
+    FLAVORS="${CEPH_BRANCH},centos,7"
     make FLAVORS=${FLAVORS} CEPH_DEVEL=${DEVEL} RELEASE="$RELEASE" build.parallel
   else
     make CEPH_DEVEL=${DEVEL} RELEASE="$RELEASE" build.parallel
