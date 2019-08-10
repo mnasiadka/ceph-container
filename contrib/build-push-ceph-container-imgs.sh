@@ -171,9 +171,9 @@ function build_ceph_imgs {
   FLAVORS=""
   if ${DEVEL}; then
     FLAVORS="${CEPH_BRANCH},centos,7"
-    make FLAVORS=${FLAVORS} CEPH_DEVEL=${DEVEL} RELEASE="$RELEASE" build.parallel
+    make FLAVORS=${FLAVORS} CEPH_DEVEL=${DEVEL} RELEASE=${RELEASE} TAG_REGISTRY=${CONTAINER_REPO_ORGANIZATION} build.parallel
   else
-    make CEPH_DEVEL=${DEVEL} RELEASE="$RELEASE" build.parallel
+    make CEPH_DEVEL=${DEVEL} RELEASE=${RELEASE} TAG_REGISTRY=${CONTAINER_REPO_ORGANIZATION} build.parallel
   fi
   ${DOCKER_CMD} images
 }
