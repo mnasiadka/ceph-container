@@ -203,6 +203,18 @@ function build_and_push_latest_bis {
 declare -F push_ceph_imgs_latest ||
 function push_ceph_imgs_latest {
   local latest_name
+
+  if [[ ${DEVEL} ]] ; then
+    for i in daemon-base daemon; do
+      local_tag=${BRANCH}-${CEPH_BRANCH}-centos-7-${HOST_ARCH}
+      repo_tag=${CONTAINER_REPO_ORGANIZATION}/$i:${BRANCH}-${CEPH_BRANCH}-${SHA1}-centos-7-${HOST_ARCH}
+      ${DOCKER_CMD} tag $local_tag $repo_tag
+      ${DOCKER_CMD} push $repo_tag
+    done
+    return
+  fi
+
+  # XXX fix or expunge LATEST
   for release in "${CEPH_RELEASES[@]}" latest; do
     if [[ "$release" == "latest" ]]; then
       latest_name="latest"
