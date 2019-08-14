@@ -21,9 +21,11 @@ fi
 DOCKER_CMD=${DOCKER_CMD:-docker}
 
 # must be set by build job
-# CONTAINER_REPO_ORGANIZATION=${CONTAINER_REPO_ORGANIZATION:-"quay.io/dmick"}
+# CONTAINER_REPO_HOSTNAME=${CONTAINER_REPO_HOSTNAME:-"quay.io"}
+# CONTAINER_REPO_ORGANIZATION=${CONTAINER_REPO_ORGANIZATION:-"cephci"}
 # CONTAINER_REPO_USERNAME=${CONTAINER_REPO_USERNAME:-"unset"}
 # CONTAINER_REPO_PASSWORD=${CONTAINER_REPO_PASSWORD:-"unset"}
+CONTAINER_REPO_HOST_AND_ORG=${CONTAINER_REPO_HOSTNAME}/${CONTAINER_REPO_ORGANIZATION}
 
 HOST_ARCH=$(uname -m)
 BUILD_ARM= # Set this variable to anything if you want to build the ARM images too
@@ -69,7 +71,7 @@ function install_container_manager {
 
 function login_container_repo {
   echo "Log into the container repo"
-  ${DOCKER_CMD} login -u "$CONTAINER_REPO_USERNAME" -p "$CONTAINER_REPO_PASSWORD" ${CONTAINER_REPO_ORGANIZATION}
+  ${DOCKER_CMD} login -u "$CONTAINER_REPO_USERNAME" -p "$CONTAINER_REPO_PASSWORD" ${CONTAINER_REPO_HOST_AND_ORG}
 }
 
 function enable_experimental_docker_cli {
@@ -206,8 +208,8 @@ function push_ceph_imgs_latest {
 
   if [[ ${DEVEL} ]] ; then
     for i in daemon-base daemon; do
-      local_tag=${BRANCH}-${CEPH_BRANCH}-centos-7-${HOST_ARCH}
-      repo_tag=${CONTAINER_REPO_ORGANIZATION}/$i:${BRANCH}-${CEPH_BRANCH}-${SHA1}-centos-7-${HOST_ARCH}
+      local_tag=${CONTAINER_REPO_ORGANIZATION}/$i:${BRANCH}-${CEPH_BRANCH}-centos-7-${HOST_ARCH}
+      repo_tag=${CONTAINER_REPO_HOST_AND_ORG}/$i:${BRANCH}-${CEPH_BRANCH}-${SHA1:0:8}-centos-7-${HOST_ARCH}
       ${DOCKER_CMD} tag $local_tag $repo_tag
       ${DOCKER_CMD} push $repo_tag
     done
