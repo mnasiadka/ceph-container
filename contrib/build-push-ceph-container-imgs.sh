@@ -18,6 +18,11 @@ fi
 # allow overriding with podman
 DOCKER_CMD=${DOCKER_CMD:-docker}
 
+# must be set by build job
+# CONTAINER_REPO_ORGANIZATION=${CONTAINER_REPO_ORGANIZATION:-"dmick"}
+# CONTAINER_REPO_USERNAME=${CONTAINER_REPO_USERNAME:-"unset"}
+# CONTAINER_REPO_PASSWORD=${CONTAINER_REPO_PASSWORD:-"unset"}
+
 HOST_ARCH=$(uname -m)
 BUILD_ARM= # Set this variable to anything if you want to build the ARM images too
 CN_RELEASE="v2.3.1"
