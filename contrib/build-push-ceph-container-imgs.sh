@@ -209,7 +209,7 @@ function push_ceph_imgs_latest {
   if [[ ${DEVEL} ]] ; then
     for i in daemon-base daemon; do
       local_tag=${CONTAINER_REPO_ORGANIZATION}/$i:${CONTAINER_BRANCH}-${CEPH_BRANCH}-centos-7-${HOST_ARCH}
-      repo_tag=${CONTAINER_REPO_HOST_AND_ORG}/$i:${CONTAINER_BRANCH}-${CEPH_BRANCH}-${SHA1:0:8}-centos-7-${HOST_ARCH}
+      repo_tag=${CONTAINER_REPO_HOST_AND_ORG}/$i:${CEPH_BRANCH}-${SHA1:0:8}-centos-7-${HOST_ARCH}-devel
       ${DOCKER_CMD} tag $local_tag $repo_tag
       ${DOCKER_CMD} push $repo_tag
     done
