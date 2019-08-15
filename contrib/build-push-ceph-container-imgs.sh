@@ -9,8 +9,8 @@ set -ex
 # save the ceph branch, from the parent job
 CEPH_BRANCH=${BRANCH}
 # GIT_BRANCH is typically 'origin/master', we strip the variable to only get 'master'
-BRANCH="${GIT_BRANCH#*/}"
-LATEST_COMMIT_SHA=$(git rev-parse --short HEAD)
+CONTAINER_BRANCH="${GIT_BRANCH#*/}"
+CONTAINER_SHA=$(git rev-parse --short HEAD)
 TAGGED_HEAD=false # does HEAD is on a tag ?
 DEVEL=${DEVEL:=false}
 if [ -z "$CEPH_RELEASES" ]; then
@@ -151,19 +151,19 @@ function create_head_or_point_release {
 
     # find branch associated to that tag
     BRANCH=$(git branch -r --contains tags/"${tag_to_build[*]}" | grep -Eo 'stable-[0-9].[0-9]')
-    echo "Building a release Ceph container image based on branch $BRANCH and tag ${tag_to_build[*]}"
-    RELEASE="${tag_to_build[*]}-$BRANCH"
+    echo "Building a release Ceph container image based on branch $CONTAINER_BRANCH and tag ${tag_to_build[*]}"
+    RELEASE="${tag_to_build[*]}-$CONTAINER_BRANCH"
     # (todo): remove this when we have a better solution like running
     # the build script directly from the right branch.
-    if [ "${BRANCH}" == "stable-3.2" ]; then
+    if [ "${CONTAINER_BRANCH}" == "stable-3.2" ]; then
       CEPH_RELEASES=(luminous mimic)
-    elif [ "${BRANCH}" == "stable-4.0" ]; then
+    elif [ "${CONTAINER_BRANCH}" == "stable-4.0" ]; then
       CEPH_RELEASES=(nautilus)
     fi
   else
     set -e
-    echo "Building a devel Ceph container image based on branch $BRANCH and commit $LATEST_COMMIT_SHA"
-    RELEASE="$BRANCH-$LATEST_COMMIT_SHA"
+    echo "Building a devel Ceph container image based on branch $CONTAINER_BRANCH and commit $CONTAINER_SHA"
+    RELEASE="$CONTAINER_BRANCH-$CONTAINER_SHA"
   fi
 }
 
@@ -191,14 +191,14 @@ function build_and_push_latest_bis {
   # latest-bis-$ceph_release is needed by ceph-ansible so it can test the restart handlers on an image ID change
   # rebuild latest again to get a different image ID
   for ceph_release in "${CEPH_RELEASES[@]}"; do
-    make RELEASE="$BRANCH"-bis FLAVORS="${ceph_release}",centos,7 build
-    ${DOCKER_CMD} tag ceph/daemon:"$BRANCH"-bis-"${ceph_release}"-centos-7-"${HOST_ARCH}" ceph/daemon:latest-bis-"$ceph_release"
+    make RELEASE="$CONTAINER_BRANCH"-bis FLAVORS="${ceph_release}",centos,7 build
+    ${DOCKER_CMD} tag ceph/daemon:"$CONTAINER_BRANCH"-bis-"${ceph_release}"-centos-7-"${HOST_ARCH}" ceph/daemon:latest-bis-"$ceph_release"
     ${DOCKER_CMD} push ceph/daemon:latest-bis-"$ceph_release"
   done
 
   # Now let's build the latest
-  make RELEASE="$BRANCH"-bis FLAVORS="${CEPH_RELEASES[-1]}",centos,7 build
-  ${DOCKER_CMD} tag ceph/daemon:"$BRANCH"-bis-"${CEPH_RELEASES[-1]}"-centos-7-"${HOST_ARCH}" ceph/daemon:latest-bis
+  make RELEASE="$CONTAINER_BRANCH"-bis FLAVORS="${CEPH_RELEASES[-1]}",centos,7 build
+  ${DOCKER_CMD} tag ceph/daemon:"$CONTAINER_BRANCH"-bis-"${CEPH_RELEASES[-1]}"-centos-7-"${HOST_ARCH}" ceph/daemon:latest-bis
   ${DOCKER_CMD} push ceph/daemon:latest-bis
 }
 
@@ -208,8 +208,8 @@ function push_ceph_imgs_latest {
 
   if [[ ${DEVEL} ]] ; then
     for i in daemon-base daemon; do
-      local_tag=${CONTAINER_REPO_ORGANIZATION}/$i:${BRANCH}-${CEPH_BRANCH}-centos-7-${HOST_ARCH}
-      repo_tag=${CONTAINER_REPO_HOST_AND_ORG}/$i:${BRANCH}-${CEPH_BRANCH}-${SHA1:0:8}-centos-7-${HOST_ARCH}
+      local_tag=${CONTAINER_REPO_ORGANIZATION}/$i:${CONTAINER_BRANCH}-${CEPH_BRANCH}-centos-7-${HOST_ARCH}
+      repo_tag=${CONTAINER_REPO_HOST_AND_ORG}/$i:${CONTAINER_BRANCH}-${CEPH_BRANCH}-${SHA1:0:8}-centos-7-${HOST_ARCH}
       ${DOCKER_CMD} tag $local_tag $repo_tag
       ${DOCKER_CMD} push $repo_tag
     done
@@ -229,7 +229,7 @@ function push_ceph_imgs_latest {
       latest_name="${latest_name}-devel"
     fi
     for i in daemon-base daemon; do
-      tag=ceph/$i:${BRANCH}-${LATEST_COMMIT_SHA}-$release-centos-7-${HOST_ARCH}
+      tag=ceph/$i:${CONTAINER_BRANCH}-${CONTAINER_SHA}-$release-centos-7-${HOST_ARCH}
       # tag image
       ${DOCKER_CMD} tag "$tag" ceph/$i:"$latest_name"
 
