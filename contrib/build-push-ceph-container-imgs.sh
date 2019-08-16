@@ -13,6 +13,7 @@ CONTAINER_BRANCH="${GIT_BRANCH#*/}"
 CONTAINER_SHA=$(git rev-parse --short HEAD)
 TAGGED_HEAD=false # does HEAD is on a tag ?
 DEVEL=${DEVEL:=false}
+CI=${CI:=false}
 if [ -z "$CEPH_RELEASES" ]; then
   # NEVER change 'master' position in the array, this will break the 'latest' tag
   CEPH_RELEASES=(master luminous mimic nautilus)
@@ -171,9 +172,9 @@ declare -F build_ceph_imgs  ||
 function build_ceph_imgs {
   echo "Build Ceph container image(s)"
   FLAVORS=""
-  if ${DEVEL}; then
+  if ${CI}; then
     FLAVORS="${CEPH_BRANCH},centos,7"
-    make FLAVORS=${FLAVORS} CEPH_DEVEL=${DEVEL} RELEASE=${RELEASE} TAG_REGISTRY=${CONTAINER_REPO_ORGANIZATION} build.parallel
+    make FLAVORS=${FLAVORS} CEPH_DEVEL="true" RELEASE=${RELEASE} TAG_REGISTRY=${CONTAINER_REPO_ORGANIZATION} build.parallel
   else
     make CEPH_DEVEL=${DEVEL} RELEASE=${RELEASE} TAG_REGISTRY=${CONTAINER_REPO_ORGANIZATION} build.parallel
   fi
@@ -206,7 +207,7 @@ declare -F push_ceph_imgs_latest ||
 function push_ceph_imgs_latest {
   local latest_name
 
-  if [[ ${DEVEL} ]] ; then
+  if [[ ${CI} ]] ; then
     for i in daemon-base daemon; do
       local_tag=${CONTAINER_REPO_ORGANIZATION}/$i:${CONTAINER_BRANCH}-${CEPH_BRANCH}-centos-7-${HOST_ARCH}
       repo_tag=${CONTAINER_REPO_HOST_AND_ORG}/$i:${CEPH_BRANCH}-${SHA1:0:8}-centos-7-${HOST_ARCH}-devel
@@ -216,7 +217,6 @@ function push_ceph_imgs_latest {
     return
   fi
 
-  # XXX fix or expunge LATEST
   for release in "${CEPH_RELEASES[@]}" latest; do
     if [[ "$release" == "latest" ]]; then
       latest_name="latest"
@@ -287,13 +287,17 @@ function create_registry_manifest {
 install_container_manager
 cleanup_previous_run
 login_container_repo
-create_head_or_point_release
+if ${CI}; then
+  RELEASE=${CEPH_BRANCH}-${SHA1}
+else
+  create_head_or_point_release
+fi
 RELEASE=${CONTAINER_BRANCH}
 build_ceph_imgs
 # With devel builds we only push latest builds.
 # arm64 aren't present on shaman/chacra so we don't
 # need to create a registry manifest
-if ! ${DEVEL}; then
+if ! ( ${DEVEL} || ${CI} ) ; then
   push_ceph_imgs
   wait_for_arm_images
   if [[ ${DOCKER_CMD} == "docker" ]] ; then
@@ -307,6 +311,6 @@ if $TAGGED_HEAD; then
 fi
 push_ceph_imgs_latest
 # We don't need latest bis tags with ceph devel
-if ! ${DEVEL}; then
+if ! ( ${DEVEL} || ${CI} ); then
   build_and_push_latest_bis
 fi
